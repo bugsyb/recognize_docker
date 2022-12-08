@@ -32,3 +32,8 @@ In case of update, or moving existing data/deployment.
   
 To validate if Recognize has any chances to use GPU, validate:
 docker exec -it <your_container_name> /bin/bash -c "cd custom_apps/recognize && node ./src/test_gputensorflow.js"
+
+
+# initial sizes 
+- Debian base 20.8GB
+
