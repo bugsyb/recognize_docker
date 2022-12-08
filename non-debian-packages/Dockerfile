@@ -14,7 +14,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_19.x | bash - && \
     apt install -y youtube-dl aria2 lsof coreutils wget gnupg2 git nodejs && \
     rm -rf /var/lib/apt/lists/* && \
     apt clean && \
-    rm /tmp/* /root/.cache/* /root/.npm/* -r
+    rm /tmp/* /root/.cache/* /root/.npm/* -rf
 
 ######## TensoFlow install with Conda/Pip
 ### Conda install start
@@ -24,7 +24,7 @@ RUN curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
       conda install -c conda-forge cudatoolkit=$CUDA_VERSION cudnn=$CUDNN_VERSION && \
     rm -rf /var/lib/apt/lists/* && \
     apt clean && \
-    rm /tmp/* /root/.cache/* /root/.npm/* -r
+    rm /tmp/* /root/.cache/* /root/.npm/* -rf
 
 ### Conda installed
 
@@ -33,7 +33,7 @@ RUN pip install --upgrade pip && \
        pip install tensorflow tensorrt && \
     rm -rf /var/lib/apt/lists/* && \
     apt clean && \
-    rm /tmp/* /root/.cache/* /root/.npm/* -r
+    rm /tmp/* /root/.cache/* /root/.npm/* -rf
 
 ######## TensoFlow installed with Conda/Pip
 ################################################
@@ -51,13 +51,13 @@ RUN curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php && \
       fi && \
     rm -rf /var/lib/apt/lists/* && \
     apt clean && \
-    rm /tmp/* /root/.cache/* /root/.npm/* -r
+    rm /tmp/* /root/.cache/* /root/.npm/* -rf
 
 RUN mkdir -p /usr/src/nextcloud/custom_apps && cd /usr/src/nextcloud/custom_apps/ && \
     git clone https://github.com/nextcloud/recognize && \
     rm -rf /var/lib/apt/lists/* && \
     apt clean && \
-    rm /tmp/* /root/.cache/* /root/.npm/* /usr/src/nextcloud/custom_apps/recognize/.git*/* -r
+    rm /tmp/* /root/.cache/* /root/.npm/* /usr/src/nextcloud/custom_apps/recognize/.git*/* -rf
 
 RUN cd /usr/src/nextcloud/custom_apps/recognize && \
     make && \

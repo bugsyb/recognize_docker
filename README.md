@@ -35,5 +35,7 @@ docker exec -it <your_container_name> /bin/bash -c "cd custom_apps/recognize && 
 
 
 # initial sizes 
-- Debian base 20.8GB
+- 20.8GB - debian - Debian base
+- 17.3GB - non-debian-packages - Debian + binary packages
 
+Diff seems to be coming from the fact that Debian installs additional packages on the way.
