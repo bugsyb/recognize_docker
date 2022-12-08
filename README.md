@@ -2,7 +2,7 @@
 Recognize by marcelklehr (https://github.com/marcelklehr) put into Docker
 Big kudos o to Marcel for comingup with such a nice piece of software as well as quickly reacting to an ask to add GPU support!
 
-# Spee diff? ~ca. 25x (yes, 25 times quicker - average based on two systems testing):
+# Speed diff? ~ca. 25x (yes, 25 times quicker - average based on two systems testing):
 - Intel© Xeon© CPU E3-1505M v6 @ 3.00GHz × 4, 32GB ram, Quadro M1200 Mobile (GM107GLM)
 - Intel© Core© i7-4720HQ CPU @ 2.60GHz x 4, 16GB ram, GeForce GTX 960M (GM107M)
 How was that measured? Single runs in average take similar amount of time (this could be completely wrong way of measuring it, though I can see and touch the difference without advanced metrics). Any suggestion on how to exactly measure it as well as tests output are more than welcome.
