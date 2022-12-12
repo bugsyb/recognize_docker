@@ -7,37 +7,47 @@ ENV LD_LIBRARY_PATH=$CONDA_PREFIX/lib/:$LD_LIBRARY_PATH
 
 ENV CUDNN_VERSION=8.2.1
 ENV CUDA_VERSION=11.3
+ENV CUDA_VERSION_NVIDIA=11-8
+#ENV CUDNN_VERSION_NVIDIA=
 #ENV CUDNN_VERSION=8.7.0
 #ENV CUDA_VERSION=11.8
 
+# Notes
+# software-properties-comon requried for nvidia
 RUN curl -fsSL https://deb.nodesource.com/setup_19.x | bash - && \
-    apt install -y youtube-dl aria2 lsof coreutils wget gnupg2 git nodejs && \
+    apt install -y youtube-dl aria2 lsof coreutils wget gnupg2 git nodejs software-properties-common && \
     rm -rf /var/lib/apt/lists/* && \
     apt clean && \
-    rm /tmp/* /root/.cache/* /root/.npm/* -rf
+    rm /tmp/* /root/.cache/* -rf
 
-######## TensoFlow install with Conda/Pip
-### Conda install start
 
-RUN curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o /tmp/Miniconda3-latest-Linux-x86_64.sh && \
-      bash /tmp/Miniconda3-latest-Linux-x86_64.sh -b -p $CONDA_PREFIX && \
-      conda install -c conda-forge cudatoolkit=$CUDA_VERSION cudnn=$CUDNN_VERSION && \
+######## TensoFlow/pip install with Cuda/cudnn ia conda
+### cuda & cudnn install start
+
+RUN . /etc/os-release && \
+    export OS="${ID}${VERSION_ID}" && \
+    apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/${OS}/x86_64/3bf863cc.pub && \
+    add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/${OS}/x86_64/ /" && \
+    apt update && \
+    apt -y install cuda-toolkit-${CUDA_VERSION_NVIDIA} libcudnn8-dev && \
     rm -rf /var/lib/apt/lists/* && \
     apt clean && \
-    rm /tmp/* /root/.cache/* /root/.npm/* -rf
+    rm /tmp/* /root/.cache/* -rf
 
-### Conda installed
+RUN apt update && \
+    apt -y install python3-pip && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt clean && \
+    rm /tmp/* /root/.cache/* -rf
 
 ### Tensorflow and TensorRT
-#pip install --upgrade pip && \
-    RUN pip install nvidia-cuda-nvcc-cu11 tensorflow tensorrt && \
-    rm -rf /var/lib/apt/lists/* && \
-    apt clean && \
-    rm -rf /tmp/* && \
-    rm -rf /root/.cache/* && \
-    /root/.npm/* -rf
+RUN pip install --upgrade pip && \
+    pip install tensorflow tensorrt && \
+    rm /tmp/* /root/.cache/* -rf
+
 
 ######## TensoFlow installed with Conda/Pip
+
 ################################################
 ###### Install Recognize
 
@@ -51,19 +61,17 @@ RUN curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php && \
       else \
         exit 1 ; \
       fi && \
-    rm -rf /var/lib/apt/lists/* && \
-    apt clean && \
-    rm /tmp/* /root/.cache/* /root/.npm/* -rf
+      rm /tmp/* /root/.cache/* -rf
+
 
 RUN mkdir -p /usr/src/nextcloud/custom_apps && cd /usr/src/nextcloud/custom_apps/ && \
     git clone https://github.com/nextcloud/recognize && \
-    rm -rf /var/lib/apt/lists/* && \
-    apt clean && \
-    rm /tmp/* /root/.cache/* /root/.npm/* /usr/src/nextcloud/custom_apps/recognize/.git*/* -rf
+    rm /usr/src/nextcloud/custom_apps/recognize/.git*/* -r
 
 RUN cd /usr/src/nextcloud/custom_apps/recognize && \
     make && \
-    chown www-data: ../recognize -R
+    chown www-data: ../recognize -R && \
+    rm /tmp/* /root/.cache/* -rf
 
 ### Check if all works
 #RUN python3 -c "import tensorflow as tf; print(tf.reduce_sum(tf.random.normal([1000, 1000])))" && \
