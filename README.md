@@ -8,19 +8,22 @@ Speed diff? ~ca. 25x (yes, 25 times quicker - average based on two systems testi
 How was that measured? Single runs in average take similar amount of time (this could be completely wrong way of measuring it, though I can see and touch the difference without advanced metrics). Any suggestion on how to exactly measure it as well as tests output are more than welcome.
 
 Dockers for Recognize with GPU support (git master branch based)
-Two options available:
-- Debian 11 + additional repo + pip - as close as possible to Debian based repos/binaries,
-- Debian 11 + all rest added as additional items (MiniConda, Node, Pip).
+Three options available:
+- Debian 12 + additional repo + pip - as close as possible to Debian based repos/binaries,
+- Debian 12 + all rest added as additional items (MiniConda, Node, Pip).
+- nVIDIA TensorFlow Docker image based (nvcr.io/nvidia/tensorflow:22.03-tf2-py3 as of 2023.10.20)
 
-In both cases resulting docker image is heavy due to Cuda/CudNN, Tensorflow/TensorRT and Recognize models included together with Nextcloud source.
+In all cases resulting docker image is heavy due to Cuda/CudNN, Tensorflow/TensorRT and Recognize models included together with Nextcloud source.
 
 Pre-reqs:
-- nVidia GPU
+- nVIDIA GPU
 - drivers enabled at host level (nvidia-smi required to work properly)
 - docker with nvidia-toolkit enabled (to expose GPU to containers) - info can be found here: https://github.com/NVIDIA/nvidia-docker
 
 If all is prepped well, this should work and provid nvidia-smi output from within container:
 `sudo docker run --rm --gpus all nvidia/cuda:11.6.2-base-ubuntu20.04 nvidia-smi`
+
+Interestingly the Debian 12 based images come out smaller. Potentially I've missed some of other elements included within nVIDIA one though all works.
 
 
 How to use:
@@ -61,3 +64,6 @@ Potential issues:
 - potentially remove cached images (or rebuild without cache)
 `docker builder prune`
 
+
+Known issue(s):
+- Recognize run via cron coplaints about missing PTXAS in paths, though and relies on library known one - all works (by the looks of it), just complaint. This doesn't pop-up when run from CLI. Tried to set paths for cron, but didn't get it fixed as got attention on nVIDIA TensorFlow based one.

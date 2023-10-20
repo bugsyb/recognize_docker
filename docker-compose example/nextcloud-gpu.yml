@@ -1,0 +1,91 @@
+version: "2.4"
+
+services:
+  web:
+    build: ./nextcloud-web
+    container_name: nextcloud-web
+    hostname: nextcloud-web
+    depends_on:
+      - app
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=Europe/Paris
+    volumes:
+      - ${NFS_N2}/nextcloud_var/nginx/nginx-subfolder.conf:/etc/nginx/nginx.conf:ro
+      - ${APPO}/nextcloud_var/config:/var/www/html/config
+      - ${NFS_N2}/nextcloud_var/html:/var/www/html/
+      - ${APPO}/nextcloud_var/recognize:/var/www/html/custom_apps/recognize
+      - ${NFS_N2}/nextcloud:/data
+      - ${APPL}/nextcloud/:/log/
+    tmpfs:
+      - /var/run
+# had some weird complaints from nginx about missing folder and inability to create files (not heavy RW, ignored by not running it in tmpfs)
+#      - /var/cache
+      - /tmp
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      # Standard
+      ## HTTP Routers
+      - "traefik.http.routers.nextcloud-rtr.rule=((Host(`lune-gpunode1.your-domain`) && PathPrefix(`$NEXTCLOUD_SUBFOLDER`)) || (Host(`nextcloud-gpunode1.$DOMAIN`) && PathPrefix(`$NEXTCLOUD_SUBFOLDER`)) || (Host(`lune-gpunode1.your-domain`) && PathPrefix(`/.well-known/{{card|cal}dav|webfinger|nodeinfo}`)) || (Host(`lune.gpunode1.your-domain`) && PathPrefix(`$NEXTCLOUD_SUBFOLDER`)))"
+      - "traefik.http.routers.nextcloud-rtr.entrypoints=websecure,extwebsecure"
+      - "traefik.http.routers.nextcloud-rtr.tls=true"
+      ## HTTP Services
+      - "traefik.http.routers.nextcloud-rtr.middlewares=nextcloud-hsts,nextcloud-redir-wellknown,nextcloud-redir-dav"
+      - "traefik.http.routers.nextcloud-rtr.service=nextcloud-svc"
+      - "traefik.http.middlewares.nextcloud-hsts.headers.STSPreload=true"
+      - "traefik.http.middlewares.nextcloud-hsts.headers.STSSeconds=315360000"
+      - "traefik.http.middlewares.nextcloud-hsts.headers.STSIncludeSubdomains=true"
+      # Traefik for service discovery
+      - "traefik.http.middlewares.nextcloud-redir-dav.redirectregex.permanent=true"
+      - "traefik.http.middlewares.nextcloud-redir-dav.redirectregex.regex=^https://(.*)/.well-known/ca(rd|l)dav"
+      - "traefik.http.middlewares.nextcloud-redir-dav.redirectregex.replacement=https://$$1/remote.php/dav/"
+      - "traefik.http.middlewares.nextcloud-redir-wellknown.replacepathregex.regex=^/(subfolder/)?(.well-known/[^ca(rd|l)dav].*)"
+      - "traefik.http.middlewares.nextcloud-redir-wellknown.replacepathregex.replacement=/subfolder/index.php/$${2}"
+
+      - "traefik.http.services.nextcloud-svc.loadbalancer.server.port=80"
+    networks:
+      - prvcloud
+
+
+  app:
+    image: local/nextcloud:27.1.2-fpm-tensor-custom
+    container_name: nextcloud
+    hostname: lune-gpunode1-app
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=Europe/Paris
+      - POSTGRES_DB=your_db
+      - POSTGRES_USER=your_user
+      - POSTGRES_PASSWORD=user_pass_db
+      - POSTGRES_HOST=postgres.docker-host.your-domain
+      - NEXTCLOUD_DATA_DIR=$NEXTCLOUD_DATA_DIR
+      - PHP_MEMORY_LIMIT=4096M
+      - PHP_UPLOAD_LIMIT=4096M
+    volumes:
+      - ${APPO}/nextcloud_var/config:/var/www/html/config
+      - ${NFS_N2}/nextcloud_var/html:/var/www/html/
+      - ${APPO}/nextcloud_var/recognize:/var/www/html/custom_apps/recognize
+      - ${NFS_N2}/nextcloud:/data
+      - ${APPL}/nextcloud/:/log/
+      - ${APPO}/nextcloud_var/sys_overlay/docker-entrypoint-hooks.d:/docker-entrypoint-hooks.d/
+      - ${APPO}/nextcloud_var/sys_overlay/etc/sudoers.d/www-data-cron:/etc/sudoers.d/www-data-cron
+    tmpfs:
+      - /var/run:rw,exec,mode=1777
+      - /var/cache:rw,exec,mode=1777
+      - /tmp:rw,exec,mode=1777
+    restart: unless-stopped
+
+    networks:
+      - prvcloud
+
+networks:
+  prvcloud:
+    external: true
