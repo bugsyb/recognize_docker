@@ -25,8 +25,8 @@ If all is prepped well, this should work and provid nvidia-smi output from withi
 
 How to use:
 1. Build docker, i.e.:
-cd <Dockerfile folder>
-docker build -t local/nextcloud-recognize-gpu:latest .
+`cd <Dockerfile folder>
+DOCKER_BUILDKIT=1 docker build -t local/nextcloud-recognize-gpu:latest .`
 
 2. Run it:
 `docker run -it --rm --gpus all <your usual mappings, i.e. volumes for NC data, etc> local/nextcloud-recognize-gpu:latest -d`
@@ -45,3 +45,19 @@ initial sizes
 - 17.3GB - non-debian-packages - Debian + binary packages
 
 Diff seems to be coming from the fact that Debian installs additional packages on the way.
+
+
+Potential issues:
+1. Default docker image size is 10GB, with latest cuda libraries it surprassses this size. To change image size 
+- update configuration in 
+`/etc/docker/daemon.json`:
+`{
+  "storage-opts": [
+    "dm.basesize=20G"
+  ]
+}
+`
+- restart docker
+- potentially remove cached images (or rebuild without cache)
+`docker builder prune`
+

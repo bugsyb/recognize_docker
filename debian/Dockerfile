@@ -1,7 +1,9 @@
 # Build:
 # DOCKER_BUILDKIT=1 docker build -t local/nextcloud-recognize-gpu .
 
-FROM nextcloud:25 AS recognize-git
+ARG NCVERSION=26
+
+FROM nextcloud:$NCVERSION AS recognize-git
 ################################################
 ###### Install Recognize
 
@@ -21,28 +23,29 @@ RUN --mount=type=tmpfs,target=/tmp/ \
 # Separate run, as sometimes removal was failing complaining dirs are not empty
 RUN    rm -rf /usr/src/nextcloud/custom_apps/recognize/.git*/*
 
-#unfinished - was for youtube-dl and aria2c ocdownloader
-FROM nextcloud:25
 
-ENV CONDA_PREFIX=/0_nondist/conda/
-ENV PATH=$CONDA_PREFIX/bin:$PATH
-ENV LD_LIBRARY_PATH=$CONDA_PREFIX/lib/:$LD_LIBRARY_PATH
 
+FROM nextcloud:$NCVERSION
+
+# CONDA unused  - apt/PIP used
+#ENV CONDA_PREFIX=/0_nondist/conda/
+#ENV PATH=$CONDA_PREFIX/bin:$PATH
+#ENV LD_LIBRARY_PATH=$CONDA_PREFIX/lib/:$LD_LIBRARY_PATH
+
+# choose version, depending on HW support
+# https://docs.nvidia.com/deeplearning/cudnn/support-matrix/index.html
 ENV CUDNN_VERSION=8.2.1
-ENV CUDA_VERSION=11.3
 ENV CUDA_VERSION_NVIDIA=11-8
-#ENV CUDNN_VERSION_NVIDIA=
-#ENV CUDNN_VERSION=8.7.0
-#ENV CUDA_VERSION=11.8
 
-# give heads up the git installation as it doesn't need apt access for git pull
-RUN mkdir -p /tmp/certs && cd /tmp/certs && \
-    curl -O http://www.cacert.org/certs/root_X0F.crt -O http://www.cacert.org/certs/class3_x14E228.crt && \
-    mv root_X0F.crt /usr/local/share/ca-certificates/cacert-root.crt && \
-    mv class3_x14E228.crt /usr/local/share/ca-certificates/cacert-class3.crt && \
-    update-ca-certificates
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-11.8/lib64
+ENV PATH=$PATH:/usr/local/cuda/bin
 
-#RUN sleep 15
+# NodeJS version selection
+ENV NODE_MAJOR=20
+
+
+###     curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+##    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 2F59B5F99B1BE0B4 && \
 
 # Notes
 # software-properties-comon requried for nvidia
@@ -50,18 +53,28 @@ RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     --mount=type=tmpfs,target=/tmp/ \
     --mount=type=tmpfs,target=/root/.cache \
-    curl -fsSL https://deb.nodesource.com/setup_19.x | bash - && \
-    apt install -y youtube-dl aria2 lsof coreutils wget gnupg2 git nodejs software-properties-common logrotate
+    apt update && \
+    apt install -y youtube-dl aria2 lsof coreutils wget gnupg2 git software-properties-common logrotate sudo && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+    apt-key adv --fetch-keys https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key && \
+    apt update && \
+    apt install -y nodejs
 
 ######## TensoFlow/pip install with Cuda/cudnn ia conda
 ### cuda & cudnn install start
-
+# 2023.10.14 - no debian12 packages: debian12 => debian11 substition
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     --mount=type=tmpfs,target=/tmp/ \
     --mount=type=tmpfs,target=/root/.cache \
     . /etc/os-release && \
     export OS="${ID}${VERSION_ID}" && \
+ [ "$OS" = "debian12" ] && export OS=debian11 && \
+    curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg && \
+      curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+        sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+          tee /etc/apt/sources.list.d/nvidia-container-toolkit.list && \
     apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/${OS}/x86_64/3bf863cc.pub && \
     add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/${OS}/x86_64/ /" && \
     apt update
@@ -78,20 +91,27 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=tmpfs,target=/root/.cache \
     apt -y install cuda-toolkit-${CUDA_VERSION_NVIDIA} libcudnn8-dev
 
+######## TensoFlow installed with Pip
 RUN  --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     --mount=type=tmpfs,target=/tmp/ \
     --mount=type=tmpfs,target=/root/.cache \
-    apt -y install python3-pip
+    apt update && \
+    apt -y install python3 python3-pip python3-setuptools python3-dev
 
 ### Tensorflow and TensorRT
+# 2023.10.14 newer pip breaks tensorrt install at wheel time (download issue)
+#    pip install --break-system-packages --upgrade pip && \
+#   --use-pep517
+
 RUN --mount=type=tmpfs,target=/tmp/ \
     --mount=type=tmpfs,target=/root/.cache \
-    pip install --upgrade pip && \
-    pip install tensorflow tensorrt
+    pip install --break-system-packages --upgrade pip==21.3.1 && \
+    pip install --upgrade tensorflow tensorrt
+#    pip install --break-system-packages --upgrade pip && \
+#    pip install --break-system-packages --upgrade tensorflow tensorrt
 
 
-######## TensoFlow installed with Conda/Pip
 
 ################################################
 ###### Install Recognize
@@ -109,18 +129,45 @@ RUN --mount=type=tmpfs,target=/tmp/ \
         exit 1 ; \
       fi
 
-### Grab Recognize
-COPY --from=recognize-git /usr/src/nextcloud/custom_apps/ /usr/src/nextcloud/custom_apps/
+# give heads up the git installation as it doesn't need apt access for git pull
+RUN mkdir -p /tmp/certs && cd /tmp/certs && \
+    curl -O http://www.cacert.org/certs/root_X0F.crt -O http://www.cacert.org/certs/class3_x14E228.crt && \
+    mv root_X0F.crt /usr/local/share/ca-certificates/cacert-root.crt && \
+    mv class3_x14E228.crt /usr/local/share/ca-certificates/cacert-class3.crt && \
+    update-ca-certificates
+#RUN sleep 15
 
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    --mount=type=tmpfs,target=/tmp/ \
+
+### Grab Recognize
+RUN mkdir -p /usr/src/nextcloud/custom_apps/recognize && chown www-data: /usr/src/nextcloud/custom_apps/recognize -R
+USER www-data
+COPY --from=recognize-git /usr/src/nextcloud/custom_apps/ /usr/src/nextcloud/custom_apps/
+#     chown www-data: /usr/src/nextcloud/custom_apps/recognizecd && 
+USER root
+RUN chown www-data: /usr/src/nextcloud/custom_apps/recognize -R
+USER www-data:www-data
+
+RUN --mount=type=tmpfs,target=/tmp/ \
     --mount=type=tmpfs,target=/root/.cache \
     cd /usr/src/nextcloud/custom_apps/recognize && \
-    make && \
-    chown www-data: ../recognize -R 
+    ls -l /usr/src/nextcloud/custom_apps/ && \
+    make
 
 COPY nextcloud.logrotate /etc/logrotate.d/logrotate.conf
+
+#USER root
+#### move to very early stage
+#RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+#    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+#    --mount=type=tmpfs,target=/tmp/ \
+#    --mount=type=tmpfs,target=/root/.cache \
+
+# done
+#    apt install -y sudo
+
+
+# Recognize test
+# nodejs /usr/src/nextcloud/custom_apps/recognize/test_gputensorflow.js; echo $?
 
 ### Check if all works
 #RUN python3 -c "import tensorflow as tf; print(tf.reduce_sum(tf.random.normal([1000, 1000])))" && \

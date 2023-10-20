@@ -1,0 +1,18 @@
+/log/nextcloud.log {
+daily
+rotate 31
+compress
+
+compresscmd /usr/bin/xz
+uncompresscmd /usr/bin/unxz
+compressext .xz
+
+delaycompress
+missingok
+notifempty
+
+# If fail2ban runs as non-root it still needs to have write access
+# to logfiles.
+# create 640 fail2ban adm
+create 644 www-data www-data
+}
