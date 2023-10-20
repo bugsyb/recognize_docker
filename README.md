@@ -7,11 +7,12 @@ Speed diff? ~ca. 25x (yes, 25 times quicker - average based on two systems testi
 - Intel© Core© i7-4720HQ CPU @ 2.60GHz x 4, 16GB ram, GeForce GTX 960M (GM107M)
 How was that measured? Single runs in average take similar amount of time (this could be completely wrong way of measuring it, though I can see and touch the difference without advanced metrics). Any suggestion on how to exactly measure it as well as tests output are more than welcome.
 
-Dockers for Recognize with GPU support (git master branch based)
+Dockers for Recognize with GPU support (git master branch based).\
+\
 Three options available:
 - Debian 12 + additional repo + pip - as close as possible to Debian based repos/binaries,
-- Debian 12 + all rest added as additional items (MiniConda, Node, Pip).
-- nVIDIA TensorFlow Docker image based (nvcr.io/nvidia/tensorflow:22.03-tf2-py3 as of 2023.10.20)
+- Debian 12 + all rest added as additional items (MiniConda, Node, Pip),
+**- nVIDIA TensorFlow Docker image based (nvcr.io/nvidia/tensorflow:22.03-tf2-py3 as of 2023.10.20).**
 
 In all cases resulting docker image is heavy due to Cuda/CudNN, Tensorflow/TensorRT and Recognize models included together with Nextcloud source.
 
