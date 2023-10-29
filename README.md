@@ -27,7 +27,16 @@ If all is prepped well, this should work and provid nvidia-smi output from withi
 Interestingly the Debian 12 based images come out smaller. Potentially I've missed some of other elements included within nVIDIA one though all works.
 
 
-How to use:
+## How to use:
+
+### nVIDIA TensorFlow Docker image based
+This one uses little hack, it tags nVIDIA TensorFlow Docker image as Debian, used in next steps to build php, etc. 
+Use with caution and in case if have other images built on base of Debian, remove the Debian image afterwards.
+
+Use `build-all.sh` script as it takes care of all dependencies and options/version.
+
+
+### Standard images
 1. Build docker, i.e.:
 `cd <Dockerfile folder>
 DOCKER_BUILDKIT=1 docker build -t local/nextcloud-recognize-gpu:latest .`
