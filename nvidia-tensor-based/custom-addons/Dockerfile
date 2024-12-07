@@ -1,6 +1,8 @@
 ARG NCBASE="local/nextcloud:26.0.7-apache-tensor"
 
 FROM $NCBASE AS recognize-git
+#FROM $NCBASE:$NCVERSION AS recognize-git
+#FROM local/nextcloud:26 AS recognize-git
 
 ################################################
 ###### Install Recognize
@@ -31,6 +33,8 @@ RUN    rm -rf /usr/src/nextcloud/custom_apps/recognize/.git*/*
 FROM $NCBASE
 
 ENV PATH=$PATH:/var/www/html/
+
+
 # give heads up the git installation as it doesn't need apt access for git pull
 RUN mkdir -p /tmp/certs && cd /tmp/certs && \
     curl -O http://www.cacert.org/certs/root_X0F.crt -O http://www.cacert.org/certs/class3_x14E228.crt && \
@@ -49,6 +53,14 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     /check-pip.sh && \
     rm /check-pip.sh
 
+# exiftool - Memories v7+ requires it
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    --mount=type=tmpfs,target=/tmp/ \
+    --mount=type=tmpfs,target=/root/.cache \
+    --mount=type=tmpfs,target=/root/.npm \
+    apt update && \
+    apt install -y libimage-exiftool-perl
 
 #    apt install -y youtube-dl aria2 lsof coreutils wget gnupg2 git software-properties-common logrotate sudo && \
 
@@ -63,3 +75,5 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 #RUN python3 -c "import tensorflow as tf; print(tf.reduce_sum(tf.random.normal([1000, 1000])))" && \
 #      python3 -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"
 #RUN python3 -c "import tensorrt;print(tensorrt.__version__);assert tensorrt.Builder(tensorrt.Logger());import tensorflow as tf;print(tf.config.list_physical_devices('GPU'))"
+
+COPY --from=recognize-git /usr/src/nextcloud/custom_apps/recognize/ /usr/src/nextcloud/custom_apps/recognize/
