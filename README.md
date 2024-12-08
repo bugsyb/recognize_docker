@@ -12,7 +12,7 @@ Dockers for Recognize with GPU support (git master branch based).\
 Three options available:
 - Debian 12 + additional repo + pip - as close as possible to Debian based repos/binaries,
 - Debian 12 + all rest added as additional items (MiniConda, Node, Pip),
-- **nVIDIA TensorFlow Docker image based (nvcr.io/nvidia/tensorflow:22.03-tf2-py3 as of 2023.10.20).**
+- **nVIDIA TensorFlow Docker image based (nvcr.io/nvidia/tensorflow:24.10-tf2-py3 as of 2024.12.08).**
 
 In all cases resulting docker image is heavy due to Cuda/CudNN, Tensorflow/TensorRT and Recognize models included together with Nextcloud source.
 
