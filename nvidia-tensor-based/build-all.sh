@@ -22,9 +22,7 @@ SKIP_GIT_UPDATES=false
 
 # potential adjustments, builds fine as of 2023.10.16
 TENSOR_IMAGE=nvcr.io/nvidia/tensorflow
-TENSOR_VER=24.10-tf2-py3 # last on 22.04 ubuntu - bookworm, 24.04 is trixie
-#TENSOR_VER=22.03-tf2-py3 # bullseye - new nextcloud is bookworm
-#TENSOR_VER=23.04-tf2-py3 # first with 22.04 ubuntu - bookworm
+TENSOR_VER=22.12-tf2-py3 # last on 22.04 ubuntu - bookworm, 24.04 is trixie
 
 
 ## rarely needed to be touched
