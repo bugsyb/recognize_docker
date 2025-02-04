@@ -50,7 +50,7 @@ In case of update, or moving existing data/deployment.
 `   rsync -avH /usr/src/nextcloud/custom_apps/recognize/ /var/www/html/custom_apps/recognize/`
   
 To validate if Recognize has any chances to use GPU, validate:
-docker exec -it <your_container_name> /bin/bash -c "cd custom_apps/recognize && node ./src/test_gputensorflow.js"
+docker exec -it <your_container_name> /bin/bash -c "cd custom_apps/recognize && bin/node ./src/test_gputensorflow.js"
 
 
 initial sizes 
