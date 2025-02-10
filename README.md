@@ -40,18 +40,18 @@ Use `build-all.sh` script as it takes care of all dependencies and options/versi
 1. Build docker, i.e.:
 ```bash
 cd <Dockerfile folder>
-DOCKER_BUILDKIT=1 docker build -t local/nextcloud-recognize-gpu:latest .`
+DOCKER_BUILDKIT=1 docker build -t local/nextcloud-recognize-gpu:latest .
 ```
 
 2. Run it:
 ```bash
-docker run -it --rm --gpus all <your usual mappings, i.e. volumes for NC data, etc> local/nextcloud-recognize-gpu:latest -d`
+docker run -it --rm --gpus all <your usual mappings, i.e. volumes for NC data, etc> local/nextcloud-recognize-gpu:latest -d
 ```
 In case of update, or moving existing data/deployment.
 - Recognize with gpu support is in: /usr/src/nextcloud/custom_apps/recognize
 - it needs to be:
 ```bash
-rsync -avH /usr/src/nextcloud/custom_apps/recognize/ /var/www/html/custom_apps/recognize/`
+rsync -avH /usr/src/nextcloud/custom_apps/recognize/ /var/www/html/custom_apps/recognize/
 ```  
 To validate if Recognize has any chances to use GPU, validate:
 ```bash
