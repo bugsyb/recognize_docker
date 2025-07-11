@@ -35,6 +35,12 @@ Use with caution and in case if have other images built on base of Debian, remov
 
 Use `build-all.sh` script as it takes care of all dependencies and options/version.
 
+For these where Tensorflow is missing, most likely "-g" option has been missed and as such Nextcloud image was built without injecting Tensorflow into underlying images - this is essential.
+
+Additionally, once it's all done, Node binary is needed, as due to other changes it doesn't get included automatically anymore into (to be fixed).
+Finally also, todo for me, is to re-add back also automated build/retreival via npm of the missing components as required by Recognize and way it is shared (check for manual Recognize installation).
+It all worked earlier - just changes versions wise made this difference.
+
 
 ### Standard images
 1. Build docker, i.e.:
